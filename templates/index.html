@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>To-Do List</h1>
+    <form action="{{ url_for('add_task') }}" method="POST">
+        <label for="description">Description:</label>
+        <input type="text" name="description" required>
+        <label for="start_time">Start Time:</label>
+        <input type="time" name="start_time" required>
+        <label for="end_time">End Time:</label>
+        <input type="time" name="end_time" required>
+        <button type="submit">Add Task</button>
+    </form>
+
+    <ul>
+        {% for task in tasks %}
+        <li>
+            <span>{{ task.description }} from {{ task.start_time }} to {{ task.end_time }}</span>
+            {% if not task.completed %}
+            <form id="complete-task-{{ loop.index0 }}" action="{{ url_for('complete_task', task_index=loop.index0) }}" method="POST" style="display:inline;">
+                <button type="submit">Complete</button>
+            </form>
+            {% else %}
+            <span>Completed at {{ task.completion_time }}</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        function checkTasks() {
+            const now = new Date();
+            const currentTime = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
+
+            const tasks = {{ tasks|tojson }};
+            tasks.forEach((task, index) => {
+                if (!task.completed && task.end_time === currentTime) {
+                    alert(`Task "${task.description}" is about to end!`);
+                    startCountdown(index);
+                }
+            });
+        }
+
+        function startCountdown(taskIndex) {
+            let extraTime = 0;
+            const interval = setInterval(() => {
+                extraTime++;
+                console.log(`Task ${taskIndex} extra time: ${extraTime} minutes`);
+            }, 60000); // 1 minute intervals
+
+            document.querySelector(`#complete-task-${taskIndex}`).addEventListener('submit', () => {
+                clearInterval(interval);
+            });
+        }
+
+        setInterval(checkTasks, 60000);
+    });
+    </script>
+</body>
+</html>
